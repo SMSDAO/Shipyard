@@ -6,6 +6,7 @@ import {
   Code2, ExternalLink, ShieldAlert
 } from 'lucide-react';
 import { ShipyardCard } from './ui/ShipyardCard';
+import { ContractMonitoringView } from './dashboard/ContractMonitoringView';
 import { User } from '../types';
 
 interface MultiChainEngineViewProps {
@@ -26,6 +27,7 @@ export const MultiChainEngineView: React.FC<MultiChainEngineViewProps> = ({
   currentUser,
   onDeploySuccess,
 }) => {
+  const [subTab, setSubTab] = useState<'matrix' | 'monitoring'>('matrix');
   const [chainHealths, setChainHealths] = useState<Record<string, ChainHealth>>({
     BASE: { chain: 'BASE', online: true, blockNumber: 53207151, latencyMs: 18 },
     ARBITRUM: { chain: 'ARBITRUM', online: true, blockNumber: 271891244, latencyMs: 24 },
@@ -186,8 +188,38 @@ export const MultiChainEngineView: React.FC<MultiChainEngineViewProps> = ({
         </div>
       </div>
 
-      {/* Grid: 5 Chain RPC Health Cards using ShipyardCard with glowColor */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Sub-tab Navigation */}
+      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+        <button
+          onClick={() => setSubTab('matrix')}
+          className={`px-3.5 py-1.5 rounded-lg font-mono text-xs font-semibold cursor-pointer transition flex items-center gap-2 ${
+            subTab === 'matrix'
+              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+              : 'text-slate-400 hover:text-slate-200 border border-transparent'
+          }`}
+        >
+          <Network className="w-3.5 h-3.5" />
+          <span>Multi-Chain Architecture</span>
+        </button>
+        <button
+          onClick={() => setSubTab('monitoring')}
+          className={`px-3.5 py-1.5 rounded-lg font-mono text-xs font-semibold cursor-pointer transition flex items-center gap-2 ${
+            subTab === 'monitoring'
+              ? 'bg-violet-500/20 text-violet-300 border border-violet-500/50 shadow-[0_0_15px_rgba(139,92,246,0.2)]'
+              : 'text-slate-400 hover:text-slate-200 border border-transparent'
+          }`}
+        >
+          <Activity className="w-3.5 h-3.5 text-violet-400" />
+          <span>Real-Time Contract Monitor & Deployer</span>
+        </button>
+      </div>
+
+      {subTab === 'monitoring' ? (
+        <ContractMonitoringView />
+      ) : (
+        <>
+          {/* Grid: 5 Chain RPC Health Cards using ShipyardCard with glowColor */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Base L2 */}
         <ShipyardCard
           title="Base L2 (EVM)"
@@ -483,6 +515,8 @@ export const MultiChainEngineView: React.FC<MultiChainEngineViewProps> = ({
           </ShipyardCard>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

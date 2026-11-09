@@ -3,8 +3,11 @@ import { User } from '../types';
 import { 
   Coins, Sparkles, Rocket, Compass, Layers, Users, ShieldAlert, 
   ChevronDown, Check, User as UserIcon, Settings, ExternalLink, Zap,
-  Network
+  Network, Wallet
 } from 'lucide-react';
+import { useAccount } from 'wagmi';
+import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
+import { WalletConnectModal } from './web3/WalletConnectModal';
 
 interface NavbarProps {
   activeTab: 'create' | 'apps' | 'explore' | 'tokens' | 'org' | 'admin' | 'profile' | 'multichain' | 'appDetail';
@@ -26,7 +29,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAdapters,
 }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Real Web3 Wagmi and Solana Wallet Hooks
+  const { address: evmAddress, isConnected: isEvmConnected, chain: evmChain } = useAccount();
+  const { publicKey: solanaPubKey } = useSolanaWallet();
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -110,6 +118,30 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="font-semibold hidden sm:inline">Adapters</span>
               </button>
             )}
+
+            {/* Live Web3 Wallet Matrix Button */}
+            <button
+              onClick={() => setIsWalletModalOpen(true)}
+              className={`text-xs py-1 px-2.5 rounded-lg border font-mono transition flex items-center gap-1.5 cursor-pointer ${
+                isEvmConnected || solanaPubKey
+                  ? 'border-emerald-500/40 bg-emerald-950/30 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
+                  : 'border-cyan-500/40 bg-cyan-950/30 text-cyan-300 hover:border-cyan-500 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+              }`}
+              title="Connect Web3 Wallet (MetaMask, Coinbase, Phantom)"
+            >
+              <Wallet className="w-3.5 h-3.5 text-cyan-400" />
+              {isEvmConnected && evmAddress ? (
+                <span className="font-semibold">
+                  {evmAddress.slice(0, 6)}...{evmAddress.slice(-4)}
+                </span>
+              ) : solanaPubKey ? (
+                <span className="font-semibold">
+                  {solanaPubKey.toBase58().slice(0, 4)}...{solanaPubKey.toBase58().slice(-4)}
+                </span>
+              ) : (
+                <span className="font-bold hidden sm:inline">Connect Wallet</span>
+              )}
+            </button>
 
             {/* Credit Counter & Quick Top-Up */}
             <button
@@ -314,6 +346,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span className="text-[10px] leading-tight">Admin</span>
         </button>
       </nav>
+
+      {/* Production Web3 Wallet Connect Modal */}
+      <WalletConnectModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+      />
     </>
   );
 };

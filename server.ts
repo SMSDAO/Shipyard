@@ -30,6 +30,46 @@ async function startServer() {
   let apiKeys: ApiKey[] = [...INITIAL_API_KEYS];
   let webhooks: Webhook[] = [...INITIAL_WEBHOOKS];
   let auditLogs: AuditLog[] = [...INITIAL_AUDIT_LOGS];
+  let prismaDeployments: Array<{
+    id: string;
+    userId: string;
+    userEmail: string;
+    projectName: string;
+    chain: string;
+    contractAddress: string | null;
+    txHash: string | null;
+    status: 'PENDING' | 'BUILDING' | 'DEPLOYED' | 'FAILED' | 'REVERTED';
+    logs: string;
+    createdAt: string;
+    updatedAt: string;
+  }> = [
+    {
+      id: 'dep_init_base',
+      userId: 'usr_gxqstudio',
+      userEmail: 'gxqstudio@gmail.com',
+      projectName: 'Pixel Arcade MiniApp',
+      chain: 'BASE_L2',
+      contractAddress: '0x89A89c72E26E55D02aB56B98492062d5cD27f27A',
+      txHash: '0x38bf641a98bc12a9',
+      status: 'DEPLOYED',
+      logs: '[2026-11-09T05:20:00Z] Initialized deployment sequence.\n[2026-11-09T05:20:03Z] [DEPLOYED]: Verified block confirmation.',
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+      updatedAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: 'dep_init_arb',
+      userId: 'usr_gxqstudio',
+      userEmail: 'gxqstudio@gmail.com',
+      projectName: 'Arbitrum Vault Router',
+      chain: 'ARBITRUM_ONE',
+      contractAddress: '0x12Fa7819B812c91823901b',
+      txHash: '0x992ce12a781b23901',
+      status: 'DEPLOYED',
+      logs: '[2026-11-09T05:10:00Z] Initialized deployment sequence.\n[2026-11-09T05:10:02Z] [DEPLOYED]: Viem WebSocket listener confirmed receipt.',
+      createdAt: new Date(Date.now() - 7200000).toISOString(),
+      updatedAt: new Date(Date.now() - 7200000).toISOString(),
+    },
+  ];
 
   function getCurrentUser(): User {
     return users.find((u) => u.id === currentUserId) || users[0];
@@ -153,6 +193,109 @@ async function startServer() {
         createdAt: new Date().toISOString(),
       },
     });
+  });
+
+  // --- REAL-TIME PRISMA DEPLOYMENTS API (POST, PATCH, GET) ---
+  const ADMIN_EMAIL = "gxqstudio@gmail.com";
+
+  /**
+   * POST /api/deployments
+   * Creates a new contract deployment record in BUILDING state or updates an existing execution record.
+   */
+  app.post('/api/deployments', (req, res) => {
+    try {
+      const { projectName, chain = 'ARBITRUM_ONE', contractAddress, txHash, logs, userEmail } = req.body;
+      if (!projectName || !chain) {
+        return res.status(400).json({ error: "Missing required fields: projectName and chain are mandatory." });
+      }
+
+      const currentUser = getCurrentUser();
+      const targetEmail = userEmail || currentUser.email || ADMIN_EMAIL;
+      const targetUser = users.find((u) => u.email === targetEmail) || currentUser;
+
+      const mappedChain = chain.toUpperCase().replace(/\s+/g, "_");
+      const deployment = {
+        id: `dep_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        userId: targetUser.id,
+        userEmail: targetUser.email,
+        projectName,
+        chain: mappedChain,
+        contractAddress: contractAddress || null,
+        txHash: txHash || null,
+        status: 'BUILDING' as const,
+        logs: logs || `[${new Date().toISOString()}] Initialized deployment sequence.`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      prismaDeployments.unshift(deployment);
+      addAudit('deployments.create', `${projectName} (${mappedChain})`);
+
+      return res.status(201).json({ success: true, deployment });
+    } catch (error: any) {
+      console.error("[API_DEPLOYMENTS_POST_ERROR]", error);
+      return res.status(500).json({ error: "Internal Server Error", details: error.message });
+    }
+  });
+
+  /**
+   * PATCH /api/deployments
+   * Updates real-time deployment status (BUILDING -> DEPLOYED / FAILED / REVERTED), logs, and contract addresses.
+   */
+  app.patch('/api/deployments', (req, res) => {
+    try {
+      const { deploymentId, status, contractAddress, txHash, newLog } = req.body;
+      if (!deploymentId || !status) {
+        return res.status(400).json({ error: "deploymentId and target status are required." });
+      }
+
+      const depIndex = prismaDeployments.findIndex((d) => d.id === deploymentId);
+      if (depIndex === -1) {
+        return res.status(404).json({ error: "Deployment record not found." });
+      }
+
+      const existing = prismaDeployments[depIndex];
+      const timestamp = new Date().toISOString();
+      const updatedLogs = newLog
+        ? `${existing.logs || ""}\n[${timestamp}] [${status}]: ${newLog}`
+        : existing.logs;
+
+      prismaDeployments[depIndex] = {
+        ...existing,
+        status,
+        contractAddress: contractAddress || existing.contractAddress,
+        txHash: txHash || existing.txHash,
+        logs: updatedLogs,
+        updatedAt: timestamp,
+      };
+
+      addAudit('deployments.update', `${existing.projectName} -> ${status}`);
+      return res.json({ success: true, deployment: prismaDeployments[depIndex] });
+    } catch (error: any) {
+      console.error("[API_DEPLOYMENTS_PATCH_ERROR]", error);
+      return res.status(500).json({ error: "Internal Server Error", details: error.message });
+    }
+  });
+
+  /**
+   * GET /api/deployments
+   * Fetches real-time deployment records filtered by user or system-wide for Admin.
+   */
+  app.get('/api/deployments', (req, res) => {
+    try {
+      const user = getCurrentUser();
+      const emailParam = (req.query.email as string) || user.email;
+      const isAdmin = emailParam === ADMIN_EMAIL || user.isSuperAdmin;
+
+      const filtered = isAdmin
+        ? prismaDeployments
+        : prismaDeployments.filter((d) => d.userEmail === emailParam || d.userId === user.id);
+
+      return res.json({ success: true, count: filtered.length, deployments: filtered });
+    } catch (error: any) {
+      console.error("[API_DEPLOYMENTS_GET_ERROR]", error);
+      return res.status(500).json({ error: "Internal Server Error", details: error.message });
+    }
   });
 
   // Update Profile & User Settings matching /api/auth/profile

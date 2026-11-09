@@ -8,30 +8,30 @@ interface ChainRpcConfig {
 
 const EVM_RPC_CONFIGS: Record<string, ChainRpcConfig> = {
   ARBITRUM: {
-    primary: process.env.NEXT_PUBLIC_ARBITRUM_RPC || "https://arb1.arbitrum.io/rpc",
+    primary: import.meta.env.VITE_ARBITRUM_RPC || "https://arb1.arbitrum.io/rpc",
     fallbacks: [
-      `https://arb-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY || 'demo'}`,
+      `https://arb-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_KEY || 'demo'}`,
       "https://rpc.ankr.com/arbitrum",
     ],
   },
   BASE: {
-    primary: process.env.NEXT_PUBLIC_BASE_RPC || "https://mainnet.base.org",
+    primary: import.meta.env.VITE_BASE_RPC || "https://mainnet.base.org",
     fallbacks: [
-      `https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY || 'demo'}`,
+      `https://base-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_KEY || 'demo'}`,
       "https://developer-access-mainnet.base.org",
     ],
   },
   POLYGON: {
-    primary: process.env.NEXT_PUBLIC_POLYGON_RPC || "https://polygon-rpc.com",
+    primary: import.meta.env.VITE_POLYGON_RPC || "https://polygon-rpc.com",
     fallbacks: [
-      `https://polygon-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY || 'demo'}`,
+      `https://polygon-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_KEY || 'demo'}`,
       "https://rpc.ankr.com/polygon",
     ],
   },
   ETHEREUM: {
-    primary: process.env.NEXT_PUBLIC_ETHEREUM_RPC || "https://cloudflare-eth.com",
+    primary: import.meta.env.VITE_ETHEREUM_RPC || "https://cloudflare-eth.com",
     fallbacks: [
-      `https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY || 'demo'}`,
+      `https://eth-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_KEY || 'demo'}`,
       "https://rpc.ankr.com/eth",
     ],
   },
@@ -66,7 +66,7 @@ export class MultiChainProviderManager {
 
   public static getSolanaConnection(): Connection {
     const rpcUrl =
-      process.env.NEXT_PUBLIC_SOLANA_RPC ||
+      import.meta.env.VITE_SOLANA_RPC ||
       "https://api.mainnet-beta.solana.com";
     return new Connection(rpcUrl, "confirmed");
   }

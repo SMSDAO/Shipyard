@@ -1,0 +1,76 @@
+name: PR Verification & Integration Testing
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+jobs:
+  test-and-verify:
+    name: Build, Migrate & Playwright E2E
+    runs-on: ubuntu-latest
+
+    # Ephemeral PostgreSQL Container for Isolated Integration Testing
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: shipyard_user
+          POSTGRES_PASSWORD: shipyard_password
+          POSTGRES_DB: shipyard_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U shipyard_user -d shipyard_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: "postgresql://shipyard_user:shipyard_password@localhost:5432/shipyard_test?schema=public"
+      NEXT_PUBLIC_ALCHEMY_KEY: "demo-alchemy-key"
+      NEXT_PUBLIC_ARBITRUM_RPC: "https://arb1.arbitrum.io/rpc"
+      NEXT_PUBLIC_BASE_RPC: "https://mainnet.base.org"
+      NEXT_PUBLIC_SOLANA_RPC: "https://api.mainnet-beta.solana.com"
+      CI: true
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🗄️ Run Prisma Migrations & Generate Client
+        run: |
+          npx prisma generate
+          npx prisma db push --skip-generate
+
+      - name: 🎭 Install Playwright Browsers & Dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: 🏗️ Build Application
+        run: npm run build
+
+      - name: 🧪 Execute Playwright Integration Test Suite
+        run: npx playwright test
+
+      - name: 📤 Upload Playwright Test Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
