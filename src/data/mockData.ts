@@ -2,6 +2,26 @@ import { ShipyardApp, User, Org, FeatureFlag, AuditLog, ApiKey, Webhook } from '
 
 export const INITIAL_USERS: User[] = [
   {
+    id: 'usr_gxqstudio',
+    email: 'gxqstudio@gmail.com',
+    handle: 'gxqstudio.eth',
+    displayName: 'Lead Web3 Architect (Admin)',
+    avatarUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
+    bio: 'Lead Web3 & DevOps Systems Architect for SMSDAO/Shipyard. Overseeing multi-chain RPC provider failovers (Base L2, Arbitrum One, Polygon, Ethereum, Solana) and zero-drift deployment engine.',
+    credits: 99999,
+    role: 'OWNER',
+    isSuperAdmin: true,
+    walletAddress: '0x89A89c72E26E55D02aB56B98492062d5cD27f27A',
+    telegramHandle: 'gxqstudio',
+    githubUsername: 'SMSDAO',
+    preferredNetwork: 'Base Mainnet',
+    notificationsEnabled: true,
+    emailNotifications: true,
+    deploymentAlerts: true,
+    themePreference: 'neon',
+    customRpcUrl: 'https://mainnet.base.org',
+  },
+  {
     id: 'usr_alice',
     email: 'alice@shipyard.local',
     handle: 'alice.eth',

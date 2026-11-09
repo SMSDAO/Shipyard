@@ -1,12 +1,90 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function() {
+        if (typeof window === 'undefined') return;
+
+        // In AI Studio preview environment, HMR WebSocket is disabled.
+        // Intercept Vite HMR WebSocket connection to prevent unhandled rejection errors.
+        var NativeWebSocket = window.WebSocket;
+        if (NativeWebSocket) {
+          window.WebSocket = function(url, protocols) {
+            if (
+              protocols === 'vite-hmr' ||
+              (Array.isArray(protocols) && protocols.includes('vite-hmr')) ||
+              (typeof url === 'string' && (url.includes('vite-hmr') || url.includes('token=')))
+            ) {
+              var dummy = new EventTarget();
+              dummy.url = url || 'ws://localhost:3000/';
+              dummy.readyState = 1; // WebSocket.OPEN
+              dummy.CONNECTING = 0;
+              dummy.OPEN = 1;
+              dummy.CLOSING = 2;
+              dummy.CLOSED = 3;
+              dummy.binaryType = 'blob';
+              dummy.bufferedAmount = 0;
+              dummy.extensions = '';
+              dummy.protocol = 'vite-hmr';
+              dummy.send = function() {};
+              dummy.close = function() {
+                dummy.readyState = 3;
+                try { dummy.dispatchEvent(new Event('close')); } catch (e) {}
+              };
+              setTimeout(function() {
+                try { dummy.dispatchEvent(new Event('open')); } catch (e) {}
+              }, 0);
+              return dummy;
+            }
+            return new NativeWebSocket(url, protocols);
+          };
+          window.WebSocket.prototype = NativeWebSocket.prototype;
+          window.WebSocket.CONNECTING = 0;
+          window.WebSocket.OPEN = 1;
+          window.WebSocket.CLOSING = 2;
+          window.WebSocket.CLOSED = 3;
+        }
+
+        // Suppress benign Vite client or cross-origin frame rejection events in sandbox
+        window.addEventListener('unhandledrejection', function(event) {
+          var reason = event && event.reason;
+          var msg = (reason && (reason.message || reason.stack || String(reason))) || '';
+          if (
+            msg.includes('WebSocket') ||
+            msg.includes('@vite/client') ||
+            msg.includes('vite') ||
+            msg.includes('vite-hmr') ||
+            msg.includes('ws') ||
+            msg.includes('SecurityError') ||
+            msg.includes('cross-origin frame')
+          ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+
+        window.addEventListener('error', function(event) {
+          var msg = (event && (event.message || '')) || '';
+          var filename = (event && (event.filename || '')) || '';
+          if (
+            filename.includes('@vite/client') ||
+            filename.includes('vite') ||
+            msg.includes('WebSocket') ||
+            msg.includes('SecurityError') ||
+            msg.includes('cross-origin frame')
+          ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shipyard — Idea to Onchain Miniapp</title>
-    <meta name="description" content="Describe an idea. A team of AI agents plans, designs, builds, reviews, and deploys your onchain miniapp." />
-    <meta property="og:title" content="Shipyard — Idea to Onchain Miniapp" />
-    <meta property="og:description" content="Describe an idea. A team of AI agents plans, designs, builds, reviews, and deploys your onchain miniapp." />
+    <title>Shipyard — Enterprise Multi-Chain Web3 Engine</title>
+    <meta name="description" content="Hyper-scalable zero-drift enterprise Web3 deployment engine and dApp ecosystem for Base L2, Arbitrum One, Solana, Polygon, and Ethereum." />
+    <meta property="og:title" content="Shipyard — Enterprise Multi-Chain Web3 Engine" />
+    <meta property="og:description" content="Hyper-scalable zero-drift enterprise Web3 deployment engine and dApp ecosystem for Base L2, Arbitrum One, Solana, Polygon, and Ethereum." />
     <meta property="og:type" content="website" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />

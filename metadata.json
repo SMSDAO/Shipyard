@@ -1,6 +1,6 @@
 {
-  "name": "Shipyard — Onchain Miniapp Platform",
-  "description": "Describe an idea. A team of AI agents plans, designs, builds, reviews, and deploys your onchain miniapp.",
+  "name": "Shipyard — Enterprise Multi-Chain Web3 Engine",
+  "description": "Hyper-scalable zero-drift enterprise Web3 deployment engine and dApp ecosystem for Base L2, Arbitrum One, Solana, Polygon, and Ethereum.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

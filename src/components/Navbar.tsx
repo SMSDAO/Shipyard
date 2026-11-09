@@ -2,12 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User } from '../types';
 import { 
   Coins, Sparkles, Rocket, Compass, Layers, Users, ShieldAlert, 
-  ChevronDown, Check, User as UserIcon, Settings, ExternalLink, Zap
+  ChevronDown, Check, User as UserIcon, Settings, ExternalLink, Zap,
+  Network
 } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'create' | 'apps' | 'explore' | 'tokens' | 'org' | 'admin' | 'profile' | 'appDetail';
-  setActiveTab: (tab: 'create' | 'apps' | 'explore' | 'tokens' | 'org' | 'admin' | 'profile') => void;
+  activeTab: 'create' | 'apps' | 'explore' | 'tokens' | 'org' | 'admin' | 'profile' | 'multichain' | 'appDetail';
+  setActiveTab: (tab: 'create' | 'apps' | 'explore' | 'tokens' | 'org' | 'admin' | 'profile' | 'multichain') => void;
   currentUser: User;
   users: User[];
   onSwitchUser: (user: User) => void;
@@ -43,6 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'apps', label: 'My Apps', icon: Rocket },
     { id: 'explore', label: 'Explore', icon: Compass },
     { id: 'tokens', label: 'Tokens', icon: Layers },
+    { id: 'multichain', label: 'Multi-Chain', icon: Network },
     { id: 'org', label: 'Team', icon: Users },
   ] as const;
 
@@ -69,7 +71,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-2 font-semibold text-brand-600 cursor-pointer shrink-0 transition hover:opacity-90"
           >
             <img src="/icon.svg" alt="Shipyard" width={24} height={24} className="rounded-md" />
-            <span className="tracking-tight">Shipyard</span>
+            <span className="tracking-tight font-mono font-bold">Shipyard</span>
           </button>
 
           {/* Desktop Nav Links */}
@@ -80,13 +82,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`whitespace-nowrap transition cursor-pointer text-sm ${
+                  className={`whitespace-nowrap transition cursor-pointer text-sm flex items-center gap-1.5 ${
                     isActive
-                      ? 'text-brand-600 font-semibold opacity-100'
-                      : 'opacity-70 hover:text-brand-600 hover:opacity-100'
+                      ? 'text-cyan-400 font-semibold opacity-100'
+                      : 'opacity-70 hover:text-cyan-400 hover:opacity-100'
                   }`}
                 >
-                  {item.label}
+                  {item.id === 'multichain' && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  )}
+                  <span>{item.label}</span>
                 </button>
               );
             })}
@@ -102,7 +107,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="Real Base L2, Telegram, GitHub & Gemini Adapters"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-semibold hidden sm:inline">Real Adapters</span>
+                <span className="font-semibold hidden sm:inline">Adapters</span>
               </button>
             )}
 
@@ -160,19 +165,36 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <div className="text-[11px] text-zinc-500 font-mono truncate">
                           @{currentUser.handle}
                         </div>
+                        {currentUser.email === 'gxqstudio@gmail.com' && (
+                          <div className="text-[10px] text-purple-400 font-mono font-bold mt-0.5">
+                            ★ System Admin Override
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => {
-                        setActiveTab('profile');
-                        setShowUserMenu(false);
-                      }}
-                      className="mt-2.5 w-full btn-primary text-xs py-1.5 flex items-center justify-center gap-1.5 cursor-pointer font-medium"
-                    >
-                      <Settings className="w-3.5 h-3.5" />
-                      <span>Edit Profile & Settings</span>
-                    </button>
+                    <div className="grid grid-cols-2 gap-1.5 mt-2.5">
+                      <button
+                        onClick={() => {
+                          setActiveTab('profile');
+                          setShowUserMenu(false);
+                        }}
+                        className="btn-primary text-xs py-1.5 flex items-center justify-center gap-1 cursor-pointer font-medium"
+                      >
+                        <Settings className="w-3 h-3" />
+                        <span>Profile</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveTab('multichain');
+                          setShowUserMenu(false);
+                        }}
+                        className="btn-ghost text-xs py-1.5 flex items-center justify-center gap-1 cursor-pointer font-medium border-cyan-500/40 text-cyan-400"
+                      >
+                        <Network className="w-3 h-3" />
+                        <span>Multi-Chain</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Switch Persona Header */}
@@ -256,7 +278,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => setActiveTab(item.id)}
               className={`flex flex-col items-center justify-center gap-0.5 py-1 px-2 rounded-xl transition cursor-pointer ${
                 isActive
-                  ? 'text-brand-600 dark:text-brand-400 font-semibold'
+                  ? 'text-cyan-400 font-semibold'
                   : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 opacity-70'
               }`}
             >

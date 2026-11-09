@@ -19,6 +19,7 @@ import { TopUpModal } from './components/TopUpModal';
 import { OfflineSyncBanner } from './components/OfflineSyncBanner';
 import { RealAdaptersHub } from './components/RealAdaptersHub';
 import { ProfileView } from './components/ProfileView';
+import { MultiChainEngineView } from './components/MultiChainEngineView';
 import { 
   loadOfflineState, 
   saveOfflineState, 
@@ -33,15 +34,27 @@ import {
 } from './lib/offlineSync';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'create' | 'apps' | 'explore' | 'tokens' | 'org' | 'admin' | 'profile' | 'appDetail'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'apps' | 'explore' | 'tokens' | 'org' | 'admin' | 'profile' | 'multichain' | 'appDetail'>('create');
   const [selectedAppId, setSelectedAppId] = useState<string>('app_pixel_arcade');
   
   // Load initial state from local storage cache if available for instant offline hydration
   const cachedState = typeof window !== 'undefined' ? loadOfflineState() : null;
 
   const [apps, setApps] = useState<ShipyardApp[]>(cachedState?.apps || INITIAL_APPS);
-  const [users, setUsers] = useState<User[]>(cachedState?.users || INITIAL_USERS);
-  const [currentUser, setCurrentUser] = useState<User>(cachedState?.currentUser || INITIAL_USERS[0]);
+  const [users, setUsers] = useState<User[]>(() => {
+    const list = cachedState?.users || INITIAL_USERS;
+    // Ensure gxqstudio@gmail.com is always present with admin privileges
+    if (!list.some(u => u.email === 'gxqstudio@gmail.com')) {
+      return [INITIAL_USERS[0], ...list];
+    }
+    return list;
+  });
+  const [currentUser, setCurrentUser] = useState<User>(() => {
+    if (cachedState?.currentUser && cachedState.currentUser.email !== 'alice@shipyard.local') {
+      return cachedState.currentUser;
+    }
+    return INITIAL_USERS[0];
+  });
   const [orgs, setOrgs] = useState<Org[]>(cachedState?.orgs || INITIAL_ORGS);
   const [webhooks, setWebhooks] = useState<Webhook[]>(cachedState?.webhooks || INITIAL_WEBHOOKS);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>(cachedState?.apiKeys || INITIAL_API_KEYS);
@@ -714,6 +727,24 @@ export default function App() {
                 currentUser={currentUser}
                 onUpdateProfile={handleUpdateProfile}
                 appsCount={apps.filter((a) => a.ownerId === currentUser.id).length}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 'multichain' && (
+            <motion.div
+              key="multichain"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+            >
+              <MultiChainEngineView
+                currentUser={currentUser}
+                onDeploySuccess={(dep) => {
+                  showToast(`Smart contract deployed to ${dep.chain}!`, 'success');
+                  addAuditLog('web3.multichain_deploy', `${dep.projectName} (${dep.chain})`);
+                }}
               />
             </motion.div>
           )}

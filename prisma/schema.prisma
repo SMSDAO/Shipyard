@@ -1,0 +1,76 @@
+// ==============================================================================
+//  SHIPYARD ENTERPRISE DATABASE SCHEMA (Zero-Drift Single Source of Truth)
+//  Target Database: PostgreSQL (with PgBouncer / Prisma Accelerate support)
+// ==============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  DEVELOPER
+  ADMIN
+}
+
+enum ChainType {
+  ETHEREUM
+  ARBITRUM_ONE
+  BASE_L2
+  POLYGON
+  SOLANA
+}
+
+enum DeploymentStatus {
+  PENDING
+  BUILDING
+  DEPLOYED
+  FAILED
+  REVERTED
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  walletAddress String?      @unique
+  role          Role         @default(USER)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deployments   Deployment[]
+  apiKeys       ApiKey[]
+
+  @@index([email])
+  @@index([walletAddress])
+}
+
+model ApiKey {
+  id        String    @id @default(uuid())
+  key       String    @unique
+  name      String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+}
+
+model Deployment {
+  id              String           @id @default(uuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectName     String
+  chain           ChainType
+  contractAddress String?
+  txHash          String?
+  status          DeploymentStatus @default(PENDING)
+  logs            String?          @db.Text
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([chain, status])
+}

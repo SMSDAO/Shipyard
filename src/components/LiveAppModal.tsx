@@ -99,7 +99,7 @@ export const LiveAppModal: React.FC<LiveAppModalProps> = ({ app, isOpen, onClose
                 title={`${app.name} Sandbox`}
                 srcDoc={app.previewHtml}
                 className="w-full h-full border-0"
-                sandbox="allow-scripts allow-forms"
+                sandbox="allow-scripts allow-forms allow-same-origin"
               />
             ) : (
               <div className="h-full flex flex-col items-center justify-center p-8 text-center text-zinc-400 space-y-4">

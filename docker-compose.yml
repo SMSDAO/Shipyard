@@ -1,0 +1,34 @@
+services:
+  shipyard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/shipyard?schema=public
+      - NEXT_PUBLIC_BASE_RPC=https://mainnet.base.org
+      - NEXT_PUBLIC_ARBITRUM_RPC=https://arb1.arbitrum.io/rpc
+      - NEXT_PUBLIC_POLYGON_RPC=https://polygon-rpc.com
+      - NEXT_PUBLIC_ETHEREUM_RPC=https://cloudflare-eth.com
+      - NEXT_PUBLIC_SOLANA_RPC=https://api.mainnet-beta.solana.com
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=shipyard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
