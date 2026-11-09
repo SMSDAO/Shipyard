@@ -1,0 +1,6 @@
+{
+  "name": "Shipyard — Onchain Miniapp Platform",
+  "description": "Describe an idea. A team of AI agents plans, designs, builds, reviews, and deploys your onchain miniapp.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
